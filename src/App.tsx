@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Sidebar, type ActiveTab } from '@/components/Sidebar';
 import { DashboardView } from '@/components/DashboardView';
 import { FarmView } from '@/components/FarmView';
+import { QuestView } from '@/components/QuestView';
 import { DatabaseView } from '@/components/DatabaseView';
 import { ConsoleView } from '@/components/ConsoleView';
 import { SettingsView } from '@/components/SettingsView';
@@ -13,7 +14,8 @@ import type { SpooferConfig } from '@/types/spoofer';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
-  const [isFarmRun, setIsFarmRun] = useState(false);
+  /** Which tab started the current run, so each view only reacts to its own. */
+  const [runKind, setRunKind] = useState<'dashboard' | 'farm' | 'quest'>('dashboard');
   const [config, setConfig] = useState<SpooferConfig>({
     limit: null,
     batch_size: 8,
@@ -66,15 +68,29 @@ export const App: React.FC = () => {
   }, []);
 
   const handleStart = () => {
-    setIsFarmRun(false);
+    setRunKind('dashboard');
     actions.start(effectiveConfig);
   };
 
   const handleStartFarm = (gameIds: string[], durationSecs: number | null) => {
-    setIsFarmRun(true);
+    setRunKind('farm');
     actions.start({
       ...effectiveConfig,
       farm_game_ids: gameIds,
+      farm_duration_secs: durationSecs,
+    });
+  };
+
+  /**
+   * Quest mode rides the same fixed-batch path as the farm: one game, no rotation,
+   * no history entries. Discord credits a play quest while a single game process is
+   * alive, so anything wider than this only adds noise.
+   */
+  const handleStartQuest = (gameId: string, durationSecs: number) => {
+    setRunKind('quest');
+    actions.start({
+      ...effectiveConfig,
+      farm_game_ids: [gameId],
       farm_duration_secs: durationSecs,
     });
   };
@@ -122,10 +138,22 @@ export const App: React.FC = () => {
             <FarmView
               status={status}
               tickData={tickData}
-              isFarmRun={isFarmRun}
+              isFarmRun={runKind === 'farm'}
               isBetaEnabled={Boolean(config.beta_enabled)}
               isFetching={isFetchingDatabase}
               onStart={handleStartFarm}
+              onStop={actions.stop}
+            />
+          )}
+
+          {activeTab === 'quest' && (
+            <QuestView
+              status={status}
+              tickData={tickData}
+              isQuestRun={runKind === 'quest'}
+              isBetaEnabled={Boolean(config.beta_enabled)}
+              isFetching={isFetchingDatabase}
+              onStart={handleStartQuest}
               onStop={actions.stop}
             />
           )}

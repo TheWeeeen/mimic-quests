@@ -1,137 +1,52 @@
-# mimic
+# mimic-quests
 
-**English** · [Русский](README.md)
+A fork of [mimic-discord](https://github.com/Timon2306/mimic-discord) that adds a Discord quest mode.
 
-<div align="center">
-  <img src="mimic.png" width="128" height="128" alt="mimic logo" />
-  <p><strong>Lightweight desktop Discord game activity spoofer & badge booster</strong></p>
-  <p>Boost your Discord profile <b>Game Variety (Универсал)</b> and <b>Game Time (Время в играх)</b> badges natively on Windows & Linux.</p>
-  <br />
-  <img src="proof.png" width="300" alt="Mythic Game Variety Badge Proof (9,837 games)" />
-  <p><sub>Mythic «Универсал» badge unlocked with 9,837 games via mimic</sub></p>
-</div>
+The original runs games in batches of 8 for 15 seconds to grind the profile badges. A play quest ("play the game for 15 minutes") needs the opposite: one game, one process, one fixed timer. That is what this fork adds.
 
----
+![Quest tab](docs/quest-tab.png)
 
-<a id="download"></a>
+## What changed
 
-## ⬇️ Download (no terminal needed)
+- **Quests** tab (`src/components/QuestView.tsx`): pick a single game from Discord's official detectable-games database (native `.exe` only), choose 15/30/45/60 minutes, and the run stops by itself. A checklist and the honest limits sit right next to the controls.
+- Before this, a quest was done by hand through the hour-farm tab: no 15-minute preset existed, so you had to pick "until stopped" and hit stop yourself.
+- The chosen game and duration persist in `localStorage`.
+- Run state moved from `isFarmRun` to `runKind` (`dashboard` / `farm` / `quest`) so each tab only reacts to its own run.
+- Version bumped to 1.4.0. The Rust backend is untouched.
 
-**👉 [Download the latest release](https://github.com/Timon2306/mimic-discord/releases/latest)** and open the **Assets** section at the bottom of the page.
+## How it works
 
-| Your system | File to download |
-| --- | --- |
-| Windows (easiest) | `mimic_<version>_x64_portable.exe` — download and run, no installation |
-| Windows (installer) | `mimic_<version>_x64-setup.exe` — installs with a Start Menu and desktop shortcut |
-| Linux | `mimic_<version>_amd64.AppImage` (`chmod +x` and run) or `mimic_<version>_amd64.deb` |
+Discord credits a play quest from its own heartbeat: while the desktop client sees the game process running, it reports progress. mimic launches a copy of a tiny helper binary renamed to the game's `.exe` from `GET /api/v9/applications/detectable`. In quest mode exactly one process runs for the chosen duration, then it is killed and the temp folder is removed.
 
-- **Do not** download `Source code (zip)` — that is the source code, not the app.
-- You do **not** need Node.js, Rust or any commands. Those are only for developers (see [Building from source](#build)).
-- Start the **Discord desktop app** before mimic (the browser version does not work).
-- If Windows shows "Windows protected your PC", click **More info → Run anyway**. The app is not code-signed, which is why SmartScreen warns about it.
+Quest mode rides the same backend path as the hour farm (a one-element `farm_game_ids` plus `farm_duration_secs`), so it neither rotates games nor writes history.
 
----
+## What will not work
 
-## ✨ Features
+- **Quests that verify the install path or platform** (GOALS, Marathon): Discord checks that the game sits inside `steamapps/common` and reads the Steam manifest. The dummy process lives in a temp folder, so those quests will not progress.
+- **`executable_fingerprint`** in the heartbeat is a 192-byte native attestation only a real game binary can produce. A spoofer sends none; inventing a value is worse than sending nothing.
+- **Linux**: quest rewards are not credited at all, Windows and macOS only.
 
-- **🏆 Game Variety Badge Booster**: Rapidly cycles through verified Discord titles in parallel batches (e.g. 8 games with 15s hold). Tested and proven to unlock the Mythic **Универсал** badge (9,800+ games).
-- **⏱️ Game Time Multiplier**: Running multiple games concurrently multiplies your Discord gameplay tracking hours (e.g. 8 games × 5 hours = 40 hours credited).
-- **🐧 Multiplatform Support**: Runs natively on both **Windows** (Win32 dummy process window emulation) and **Linux** (`prctl`/`/proc/self/comm` emulation). Note: Discord's database is heavily Windows-oriented — on Linux only **8** games have a native executable, see [Known Limitations](#limitations).
-- **🛡️ 100% Safe & Native**: Zero token extraction, zero memory injection, zero Discord client modifications. Discord naturally detects running games via official OS process inspection APIs.
-- **⚡ Background Process Emulation**: Lightweight dummy engine creating legitimate application processes without stealing focus or interrupting your work.
-- **🧹 Zero Residual Disk Footprint**: Instant per-batch cleanup ensuring temporary files are immediately removed from disk, preventing Discord settings cache bloat.
-- **💾 Smart History & State**: Persistent cache (`history.json`) skips already spoofed games across sessions so you never repeat entries.
+## Risks
 
----
+Since April 2026 Discord has been enforcing against quest automation: an "Inauthentic Quest Completion" violation, a 14–15 day quest lock, and a record in account standing (account-wide, not just quests). Renamed `.exe` files and custom paths have been caught too. It is your account — your call.
 
-## 🎮 How It Works
+The binaries are unsigned, the app spawns hidden processes and writes `.exe` files into `%TEMP%`, so antivirus may complain. The backend code is unchanged in this fork: the only network endpoints are `discord.com` (games database) and `cdn.discordapp.com` (icons), and the Discord token is never read.
 
-Discord tracks two badges for desktop gamers:
-
-1. **Game Variety (Разные игры — Универсал)**:
-   - Tracks unique PC titles played over time.
-   - Cycles through Discord's official database of 10,000+ detectable applications.
-   - Recommended setting: **Batch Size: 8**, **Hold Duration: 15s**.
-   - *Note: Discord servers process badge telemetry in batch intervals (up to 24h delay).*
-
-2. **Game Time (Время в играх)**:
-   - Tracks total playtime hours.
-   - Running parallel dummy processes multiplies tracked hours (e.g. 8x boost).
-   - Use the **Hour farm** tab: pick up to 20 games and they keep running without rotating until you stop them or the timer ends.
-
----
-
-## 🛠️ Tech Stack
-
-- **Backend**: Rust, [Tauri v2](https://v2.tauri.app/), Tokio, Reqwest, Windows API (`windows-sys`), Linux (`libc`)
-- **Frontend**: React, TypeScript, Vite, Tailwind CSS
-
----
-
-<a id="build"></a>
-
-## 🧑‍💻 Building from source
-
-> Only for developers. If you just want to use the app, [download it](#download) instead.
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v18+)
-- [Rust](https://rustup.rs/) (v1.75+)
-- [Discord Desktop Client](https://discord.com/)
-
-### Installation & Run
+## Build
 
 ```bash
-# Clone the repository
-git clone https://github.com/Timon2306/mimic-discord.git
-cd mimic-discord
-
-# Install dependencies
 npm install
-
-# Run in development mode
-npm run tauri dev
+npm run tauri dev     # run
+npm run tauri build   # installer / AppImage / deb
 ```
 
-### Production Build
+Node.js 18+ and Rust 1.75+ (on Linux also `libwebkit2gtk-4.1-dev`, `libgtk-3-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`).
 
-```bash
-# Build standalone installer & executable
-npm run tauri build
-```
+## Not carried over from upstream
 
-Compiled standalone binaries:
-- Windows: `src-tauri/target/release/bundle/nsis/` & `src-tauri/target/release/mimic.exe`
-- Linux: `src-tauri/target/release/bundle/appimage/` & `src-tauri/target/release/bundle/deb/`
+- `.github/workflows/build.yml` — pushing workflow files requires the `workflow` token scope, which this fork's token does not have. Restore CI with `gh auth refresh -s workflow` and copy the workflow from upstream.
+- `proof.png` — the author's badge screenshot.
 
-### Release assets
+## License
 
-Every release ships four files:
-
-| Platform | File | Notes |
-| --- | --- | --- |
-| Windows | `mimic_<version>_x64-setup.exe` | NSIS installer (Start Menu + desktop shortcut) |
-| Windows | `mimic_<version>_x64_portable.exe` | Single portable exe — download and run, no installation |
-| Linux | `mimic_<version>_amd64.AppImage` | Portable, `chmod +x` and run |
-| Linux | `mimic_<version>_amd64.deb` | Debian/Ubuntu package |
-
-The portable Windows build is the very same binary as the installed one — it just is not wrapped in an installer. It still needs the WebView2 runtime, which ships with Windows 10/11 by default.
-
----
-
-<a id="limitations"></a>
-
-## ⚠️ Disclaimer & Known Limitations
-
-- **Badge results are not guaranteed.** Discord decides what counts, so going past the verified numbers below may not progress the badge any further.
-- **Tested on Windows only**, with Discord games tracked up to **~10,000 games in the badge** (Mythic «Универсал»).
-- **Linux: native mode covers only 8 games.** Discord's public detectable database contains just eight Linux executables — Hearts of Iron IV, Factorio, Throne of Lies, VA-11 HALL-A, Fields of Mistria, CS:GO, Move or Die and Terraria — so process-based spoofing cannot go past them. Wine/Proton does not help: those Windows titles exist only as `win32` entries, and the Linux Discord client does not match their processes. The remaining ~24,900 titles are available only through the beta Discord RPC mode, which Discord may not credit to your profile at all.
-- A target of **24,000 games is unverified** — it may work, may be throttled, or may have no effect at all.
-- Game activity spoofing is not officially supported by Discord. Use it at your own risk.
-
----
-
-## 📄 License
-
-This project is licensed under the [MIT License](LICENSE).
+MIT. Original © Timon2306 ([mimic-discord](https://github.com/Timon2306/mimic-discord)), fork changes © TheWeeeen. Full text in [LICENSE](LICENSE).

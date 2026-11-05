@@ -92,6 +92,36 @@ const en = {
   'farm.add': 'Add to farm',
   'farm.remove': 'Remove from farm',
 
+  // Quest view
+  'nav.quests': 'Quests',
+  'quest.title': 'Quest mode',
+  'quest.subtitle':
+    'One game, one process, one fixed timer. Discord credits playtime from its own heartbeat while the game is running.',
+  'quest.autoStop': 'stops by itself',
+  'quest.durationMinutes': '{count} min',
+  'quest.start': 'Run quest',
+  'quest.elapsed': 'Running:',
+  'quest.left': 'left:',
+  'quest.busy': 'Another run is active. Stop it on the dashboard first.',
+  'quest.gameTitle': 'Game from the quest',
+  'quest.emptySelection': 'Find the game the quest asks for, below.',
+  'quest.change': 'Pick another game',
+  'quest.searchPlaceholder': 'Search by name, app id or .exe',
+  'quest.searchHint': 'Type the game name from the quest card',
+  'quest.stepsTitle': 'How to run it',
+  'quest.step1': 'In Discord open Discover → Quests and press Accept Quest.',
+  'quest.step2': 'Find the same game here and pick a timer longer than the quest asks for.',
+  'quest.step3': 'Start the run and leave the Discord desktop app open the whole time.',
+  'quest.step4': 'After the timer, restart Discord so the progress bar updates.',
+  'quest.warnTitle': 'Read before using',
+  'quest.warn1':
+    'Never batch several games for a quest — one process for one duration is what the tracker expects.',
+  'quest.warn2':
+    'Discord has been enforcing quest automation since April 2026: violations land as "Inauthentic Quest Completion", with a quest lock and an account standing record.',
+  'quest.warn3':
+    'Quests that verify the install path or Steam (GOALS, Marathon) will not progress — the dummy process lives in a temp folder.',
+  'quest.warn4': 'Quest rewards are not credited on Linux at all, only on Windows and macOS.',
+
   // Settings
   'settings.title': 'App settings',
   'settings.subtitle': 'Hybrid emulation, safety, smart cooldowns and history',
@@ -273,6 +303,36 @@ const ru: Record<MessageKey, string> = {
   'farm.exeConflict': '{exe} уже занят выбранной игрой',
   'farm.add': 'Добавить в фарм',
   'farm.remove': 'Убрать из фарма',
+
+  // Quest view
+  'nav.quests': 'Квесты',
+  'quest.title': 'Режим квестов',
+  'quest.subtitle':
+    'Одна игра, один процесс, один таймер. Discord считает время по своему heartbeat, пока игра запущена.',
+  'quest.autoStop': 'остановится сам',
+  'quest.durationMinutes': '{count} мин',
+  'quest.start': 'Запустить квест',
+  'quest.elapsed': 'Идёт:',
+  'quest.left': 'осталось:',
+  'quest.busy': 'Уже идёт другой запуск. Сначала остановите его на дашборде.',
+  'quest.gameTitle': 'Игра из квеста',
+  'quest.emptySelection': 'Найдите ниже игру, которую требует квест.',
+  'quest.change': 'Выбрать другую игру',
+  'quest.searchPlaceholder': 'Поиск по названию, app id или .exe',
+  'quest.searchHint': 'Введите название игры из карточки квеста',
+  'quest.stepsTitle': 'Как это запускать',
+  'quest.step1': 'В Discord откройте Discover → Quests и нажмите Accept Quest.',
+  'quest.step2': 'Найдите эту же игру здесь и поставьте таймер больше, чем просит квест.',
+  'quest.step3': 'Запустите и держите приложение Discord открытым всё это время.',
+  'quest.step4': 'После таймера перезапустите Discord, чтобы обновился прогресс-бар.',
+  'quest.warnTitle': 'Прочитать до запуска',
+  'quest.warn1':
+    'Не запускайте на квест батч из нескольких игр — трекер ждёт один процесс на одну длительность.',
+  'quest.warn2':
+    'С апреля 2026 Discord банит за автоматизацию квестов: violation «Inauthentic Quest Completion», лок квестов и запись в account standing.',
+  'quest.warn3':
+    'Квесты с проверкой пути установки или Steam (GOALS, Marathon) не закроются — dummy-процесс лежит во временной папке.',
+  'quest.warn4': 'На Linux награды за квесты не начисляются вообще, только Windows и macOS.',
 
   'settings.title': 'Настройки приложения',
   'settings.subtitle': 'Параметры гибридной эмуляции, безопасности, умных кулдаунов и истории',
